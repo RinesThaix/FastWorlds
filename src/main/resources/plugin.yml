@@ -1,0 +1,4 @@
+name: FastWorlds
+version: ${project.version}
+main: sexy.kostya.fastworlds.FastWorlds
+authors: [k_shandurenko]
