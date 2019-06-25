@@ -2,6 +2,7 @@ package sexy.kostya.fastworlds.nms;
 
 import net.minecraft.server.v1_12_R1.*;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -9,32 +10,69 @@ import java.util.List;
  */
 public class XChunk extends Chunk {
 
-    private static ChunkSnapshot getSnapshot(Chunk chunk) {
-        ChunkSnapshot snapshot = new ChunkSnapshot();
-        ChunkSection[] sections = chunk.getSections();
-        for (int bx = 0; bx < 16; ++bx) {
-            for (int bz = 0; bz < 16; ++bz) {
-                for (int by = 0; by < 256; ++by) {
-                    int sectionID = by >> 4;
-                    ChunkSection section = sections[sectionID];
-                    if (section == null) {
-                        continue;
-                    }
-                    snapshot.a(bx, by, bz, section.getType(bx, by & 15, bz));
-                }
-            }
-        }
-        return snapshot;
-    }
-
     private boolean couldBeUnloaded = true;
 
     XChunk(World world, Chunk original) {
-        super(world, getSnapshot(original), original.locX, original.locZ);
+        super(world, original.locX, original.locZ);
+
+        cloneSettings(original);
+
         super.mustSave = false;
         d(original.isDone());
+
+        cloneBlocks(original);
         cloneEntities(original);
         cloneTileEntities(original);
+    }
+
+    private void cloneSettings(Chunk original) {
+        System.arraycopy(original.heightMap, 0, this.heightMap, 0, 256);
+        cloneSettingArray(original, "g");
+        cloneSettingArray(original, "h");
+        cloneSettingArray(original, "i");
+    }
+
+    @SuppressWarnings("SuspiciousSystemArraycopy")
+    private void cloneSettingArray(Chunk original, String arrayName) {
+        try {
+            Field field = Chunk.class.getDeclaredField(arrayName);
+            field.setAccessible(true);
+            System.arraycopy(
+                    field.get(original),
+                    0,
+                    field.get(this),
+                    0,
+                    256
+            );
+            field.setAccessible(false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void cloneBlocks(Chunk original) {
+        boolean flag = world.worldProvider.m();
+
+        for(int x = 0; x < 16; ++x) {
+            for(int z = 0; z < 16; ++z) {
+                for(int y = 0; y < 256; ++y) {
+                    int sectionID = y >> 4;
+                    ChunkSection originalSection = original.getSections()[sectionID];
+                    if (originalSection == null) {
+                        continue;
+                    }
+                    IBlockData blockData = originalSection.getType(x, y & 15, z);
+                    if (blockData == null || blockData.getMaterial() == Material.AIR) {
+                        continue;
+                    }
+                    if (getSections()[sectionID] == null) {
+                        getSections()[sectionID] = new ChunkSection(sectionID << 4, flag);
+                    }
+                    ChunkSection mySection = getSections()[sectionID];
+                    mySection.setType(x, y & 15, z, blockData);
+                }
+            }
+        }
     }
 
     private void cloneEntities(Chunk original) {
