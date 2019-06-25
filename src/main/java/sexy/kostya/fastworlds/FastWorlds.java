@@ -15,6 +15,7 @@ public final class FastWorlds extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        Bukkit.getPluginManager().registerEvents(new FastWorldsListener(), this);
         Bukkit.getPluginManager().registerEvents(new Listener() {
 
             private XWorld world;
@@ -29,6 +30,7 @@ public final class FastWorlds extends JavaPlugin {
                         e.setCancelled(true);
                         Bukkit.getScheduler().scheduleSyncDelayedTask(FastWorlds.this, () -> {
                             this.world = XWorld.create(w, new WorldCreator("test_world"));
+                            this.world.setChunksCouldBeUnloaded(false);
                         });
                         break;
                     case "switch":

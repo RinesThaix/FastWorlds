@@ -55,9 +55,18 @@ public class XWorld extends WorldServer {
     }
 
     private WorldServer original;
+    private boolean chunksCouldBeUnloaded = true;
 
     private XWorld(MinecraftServer server, IDataManager idatamanager, WorldData worlddata, int i, MethodProfiler methodprofiler, World.Environment env, ChunkGenerator gen) {
         super(server, idatamanager, worlddata, i, methodprofiler, env, gen);
+    }
+
+    public boolean isChunksCouldBeUnloaded() {
+        return chunksCouldBeUnloaded;
+    }
+
+    public void setChunksCouldBeUnloaded(boolean chunksCouldBeUnloaded) {
+        this.chunksCouldBeUnloaded = chunksCouldBeUnloaded;
     }
 
     public WorldServer getOriginalWorld() {
